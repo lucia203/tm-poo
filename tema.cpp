@@ -1,5 +1,6 @@
-#include<iostream>
-#include<string>
+#include <iostream>
+#include <string>
+#include <exception>
 
 using namespace std;
 
@@ -57,7 +58,7 @@ public:
 
 	Hotel& operator=(const Hotel& h) {
 		if (this == &h) {
-			return *this; // auto-atribuire
+			return *this;
 		}
 
 		this->denumire = h.denumire;
@@ -88,7 +89,7 @@ public:
 		}
 	}
 
-	void afisareHotel() {
+	void afisareHotel() const {
 		cout << endl << "------------------------";
 		cout << endl << "Id: " << this->id;
 		cout << endl << "Denumire: " << this->denumire;
@@ -105,7 +106,7 @@ public:
 		cout << endl;
 	}
 
-	int getNrCamere() {
+	int getNrCamere() const {
 		return this->nrCamere;
 	}
 
@@ -118,35 +119,138 @@ public:
 		}
 	}
 
-	bool operator<(const Hotel& h) {
+	bool operator<(const Hotel& h) const {
 		return this->nrCamere < h.nrCamere;
+	}
+
+	friend ostream& operator<<(ostream& out, const Hotel& h) {
+		out << "\n[Hotel ID: " << h.id << "] " << h.denumire 
+			<< " | Categorie: " << h.categorie << " stele" 
+			<< " | Camere: " << h.nrCamere;
+		return out;
 	}
 };
 
 int Hotel::nrHoteluri = 0;
 
-void main() {
+class LantHoteluri {
+private:
+	const int idLant;
+	string numeLant;
+	int nrHoteluri;
+	Hotel* listaHoteluri;
+	static int totalLanturi;
+
+public:
+	LantHoteluri() : idLant(++totalLanturi) {
+		this->numeLant = "Lant Anonim";
+		this->nrHoteluri = 0;
+		this->listaHoteluri = nullptr;
+	}
+
+	LantHoteluri(string numeLant, int nrHoteluri, Hotel* lista) : idLant(++totalLanturi) {
+		this->numeLant = numeLant;
+		this->nrHoteluri = nrHoteluri;
+		if (nrHoteluri > 0 && lista != nullptr) {
+			this->listaHoteluri = new Hotel[nrHoteluri];
+			for (int i = 0; i < nrHoteluri; i++) {
+				this->listaHoteluri[i] = lista[i];
+			}
+		} else {
+			this->listaHoteluri = nullptr;
+			this->nrHoteluri = 0;
+		}
+	}
+
+	LantHoteluri(const LantHoteluri& l) : idLant(++totalLanturi) {
+		this->numeLant = l.numeLant;
+		this->nrHoteluri = l.nrHoteluri;
+		if (l.listaHoteluri != nullptr && l.nrHoteluri > 0) {
+			this->listaHoteluri = new Hotel[l.nrHoteluri];
+			for (int i = 0; i < l.nrHoteluri; i++) {
+				this->listaHoteluri[i] = l.listaHoteluri[i];
+			}
+		} else {
+			this->listaHoteluri = nullptr;
+		}
+	}
+
+	LantHoteluri& operator=(const LantHoteluri& l) {
+		if (this == &l) {
+			return *this;
+		}
+		this->numeLant = l.numeLant;
+		this->nrHoteluri = l.nrHoteluri;
+
+		if (this->listaHoteluri != nullptr) {
+			delete[] this->listaHoteluri;
+			this->listaHoteluri = nullptr;
+		}
+
+		if (l.listaHoteluri != nullptr && l.nrHoteluri > 0) {
+			this->listaHoteluri = new Hotel[l.nrHoteluri];
+			for (int i = 0; i < l.nrHoteluri; i++) {
+				this->listaHoteluri[i] = l.listaHoteluri[i];
+			}
+		}
+
+		return *this;
+	}
+
+	~LantHoteluri() {
+		if (this->listaHoteluri != nullptr) {
+			delete[] this->listaHoteluri;
+			this->listaHoteluri = nullptr;
+		}
+	}
+
+	Hotel& operator[](int index) {
+		if (index >= 0 && index < this->nrHoteluri && this->listaHoteluri != nullptr) {
+			return this->listaHoteluri[index];
+		} else {
+			throw out_of_range("Index invalid in lantul de hoteluri!");
+		}
+	}
+
+	friend ostream& operator<<(ostream& out, const LantHoteluri& lant) {
+		out << "\n===============================";
+		out << "\nLant Hoteluri ID: " << lant.idLant;
+		out << "\nNume Lant: " << lant.numeLant;
+		out << "\nNumar hoteluri: " << lant.nrHoteluri;
+		if (lant.listaHoteluri != nullptr && lant.nrHoteluri > 0) {
+			out << "\nLista hoteluri:";
+			for (int i = 0; i < lant.nrHoteluri; i++) {
+				out << lant.listaHoteluri[i];
+			}
+		}
+		out << "\n===============================" << endl;
+		return out;
+	}
+};
+
+int LantHoteluri::totalLanturi = 0;
+
+int main() {
 	Hotel hDefault;
-	hDefault.afisareHotel();
 
 	float* preturi = new float[4] {250.5f, 300.0f, 450.0f, 600.0f};
 	Hotel* pHotelLux = new Hotel(10, "Grand Hotel", STELE_5, 4, preturi);
-	pHotelLux->afisareHotel();
 
-	Hotel hCopie = *pHotelLux;
-	hCopie.afisareHotel();
+	Hotel* vectorHoteluri = new Hotel[2];
+	vectorHoteluri[0] = hDefault;
+	vectorHoteluri[1] = *pHotelLux;
 
-	hDefault = *pHotelLux;
-	hDefault.afisareHotel();
+	LantHoteluri lant1("Continental Group", 2, vectorHoteluri);
+	cout << lant1;
 
-	cout << endl << "Total hoteluri create: " << Hotel::nrHoteluri;
- <
-	if (hDefault < hCopie) {
-		cout << endl << "Hotelul default are mai putine camere.";
-	}
-	else {
-		cout << endl << "Hotelurile au acelasi numar de camere sau cel de-al doilea are mai putine.";
+	cout << endl << "Total hoteluri create individual: " << Hotel::nrHoteluri;
+
+	if (hDefault < *pHotelLux) {
+		cout << endl << "Hotelul default are mai putine camere decat cel de lux.";
 	}
 
+	delete[] vectorHoteluri;
 	delete pHotelLux;
+
+	return 0;
 }
